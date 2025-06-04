@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.12.1/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="dt/datatables.min.css" />
+</head>
+<body>
+    <div id="divtabla" class="container mt-4">
+
+        <!-- Botón Crear Registro fuera de la tabla -->
+        <div class="row mb-2">
+            <div class="col-5"></div>
+            <div class="col-4">
+                <a class="btn btn-success btn-sm" href="Datatable_persona.html"><i class="bi bi-arrow-left"></i>Volver</a>
+            </div>
+        </div>
+        <table id="myTable_Alumno" class="display table table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID_Alumno</th>
+                    <th>AÑO</th>
+                    <th>Materias Aprobadas</th>
+                    <th>ID_Persona</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="data">
+                <!-- Carga dinámica por DataTables -->
+            </tbody>
+        </table>
+
+        <!-- Modal Ver -->
+        <div class="modal fade" id="modalVer" tabindex="-1" aria-labelledby="modalVerLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalVerLabel">Detalles de la Persona</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body" id="contenidoVer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Editar -->
+        <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="formEditar" class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalEditarLabel">Editar Alumno</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="idAlumno" id="editarId" />
+                        <div class="mb-3">
+                            <label for="editarAnio" class="form-label">Año</label>
+                            <input type="text" class="form-control" id="editarAnio" name="anio" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editarmaterias_aprobadas" class="form-label">Materias Aprobadas</label>
+                            <input type="text" class="form-control" id="editarmaterias_aprobadas" name="materias_aprobadas" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editarIdPersona" class="form-label">ID Persona</label>
+                            <input type="text" class="form-control" id="editarIdPersona" name="Persona_idPersona" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Confirmar Eliminar -->
+        <div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalEliminarLabel">Confirmar eliminación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">¿Seguro que querés eliminar esta persona?</div>
+                    <div class="modal-footer">
+                        <button id="btnConfirmarEliminar" type="button" class="btn btn-danger">Eliminar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="dt/datatables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var tabla = $('#myTable_Alumno').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json',
+                },
+                ajax: {
+                    url: './modelo/alumno_api.php',
+                    type: 'GET',
+                    data: { action: 'listar_alumno' },
+                    dataSrc: '',
+                },
+                columns: [
+                    { data: 'idAlumno' },
+                    { data: 'anio' },
+                    { data: 'materias_aprobadas' },
+                    { data: 'Persona_idPersona' },
+                    {
+                        data: null,
+                        render: function (data, type, row) {
+                            return `
+                                <button class="btn btn-info btn-sm btnVer_Alumno" data-id="${row.idAlumno}"><i class="bi bi-person-down"></i></button>
+                                <button class="btn btn-warning btn-sm btnEditar_Alumno" data-id="${row.idAlumno}"><i class="bi bi-pencil-square"></i></button>
+                                <button class="btn btn-danger btn-sm btnEliminar_Alumno" data-id="${row.idAlumno}"><i class="bi bi-person-x-fill"></i></button>
+                            `;
+                        },
+                    },
+                ],
+            });
+        
+            // VER alumno
+            $('#myTable_Alumno').on('click', '.btnVer_Alumno', function () {
+                var id = $(this).data('id');
+                $.getJSON('./modelo/alumno_api.php', { action: 'ver_alumno', id: id }, function (data) {
+                    var html = `
+                        <p><strong>ID_Alumno:</strong> ${data.idAlumno}</p>
+                        <p><strong>AÑO:</strong> ${data.anio}</p>
+                        <p><strong>Materias Aprobadas:</strong> ${data.materias_aprobadas}</p>
+                        <p><strong>ID_Persona:</strong> ${data.Persona_idPersona}</p>
+                    `;
+                    $('#contenidoVer').html(html);
+                    var modalVer = new bootstrap.Modal(document.getElementById('modalVer'));
+                    modalVer.show();
+                });
+            });
+        
+            // EDITAR - abrir modal y cargar datos
+            $('#myTable_Alumno').on('click', '.btnEditar_Alumno', function () {
+                var id = $(this).data('id');
+                $.getJSON('./modelo/alumno_api.php', { action: 'ver_alumno', id: id }, function (data) {
+                    $('#editarId').val(data.idAlumno);
+                    $('#editarAnio').val(data.anio);
+                    $('#editarmaterias_aprobadas').val(data.materias_aprobadas);
+                    $('#editarIdPersona').val(data.Persona_idPersona);
+                    var modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
+                    modalEditar.show();
+                });
+            });
+        
+            // EDITAR - enviar formulario
+            $('#formEditar').submit(function (e) {
+                e.preventDefault();
+                var formData = $(this).serialize() + '&action=guardar_alumno';
+                $.post('./modelo/alumno_api.php', formData, function (res) {
+                    if (res.success) {
+                        $('#modalEditar').modal('hide');
+                        tabla.ajax.reload(null, false);
+                    } else {
+                        alert('Error al guardar los cambios.');
+                    }
+                }, 'json');
+            });
+        
+            // ELIMINAR - abrir modal
+            let idEliminar = null;
+            $('#myTable_Alumno').on('click', '.btnEliminar_Alumno', function () {
+                idEliminar = $(this).data('id');
+                var modalEliminar = new bootstrap.Modal(document.getElementById('modalEliminar'));
+                modalEliminar.show();
+            });
+        
+            // ELIMINAR - confirmar
+            $('#btnConfirmarEliminar').click(function () {
+                if (idEliminar) {
+                    $.post('./modelo/alumno_api.php', { action: 'eliminar_alumno', id: idEliminar }, function (res) {
+                        if (res.success) {
+                            $('#modalEliminar').modal('hide');
+                            tabla.ajax.reload(null, false);
+                        } else {
+                            alert('Error al eliminar.');
+                        }
+                    }, 'json');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
