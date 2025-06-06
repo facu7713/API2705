@@ -37,8 +37,9 @@ class Persona {
     }
 
     public function save($param) {
+        require_once 'Sanitiza.class.php';
         $exists = false;
-
+    
         if (isset($param['idPersona']) && $param['idPersona'] !== "") {
             $actual = $this->getPersonaById($param['idPersona']);
             if ($actual && isset($actual['idPersona'])) {
@@ -46,15 +47,26 @@ class Persona {
                 $this->id = $actual['idPersona'];
             }
         }
-
-        // Asignar datos del formulario
-        if (isset($param['idPersona'])) $this->id = $param['idPersona'];
-        if (isset($param['dni'])) $this->dni = $param['dni'];
-        if (isset($param['apellido'])) $this->apellido = $param['apellido'];
-        if (isset($param['nombre'])) $this->nombre = $param['nombre'];
-        if (isset($param['email'])) $this->email = $param['email'];
-        if (isset($param['telefono'])) $this->telefono = $param['telefono'];
-
+    
+        // Validar y sanitizar los datos
+        $dni = Sanitiza::DNI($param['dni'] ?? '');
+        $apellido = Sanitiza::APELLIDO($param['apellido'] ?? '');
+        $nombre = Sanitiza::NOMBRE($param['nombre'] ?? '');
+        $email = Sanitiza::EMAIL($param['email'] ?? '');
+        $telefono = Sanitiza::TELEFONO($param['telefono'] ?? '');
+    
+        // Verificar si alguno falló
+        if ($dni === false || $apellido === false || $nombre === false || $email === false || $telefono === false) {
+            return false;
+        }
+    
+        // Asignar valores ya validados
+        $this->dni = $dni;
+        $this->apellido = $apellido;
+        $this->nombre = $nombre;
+        $this->email = $email;
+        $this->telefono = $telefono;
+    
         if ($exists) {
             $sql = "UPDATE $this->table SET dni = ?, apellido = ?, nombre = ?, email = ?, telefono = ? WHERE idPersona = ?";
             $ST = $this->conexion->prepare($sql);
@@ -65,9 +77,10 @@ class Persona {
             $ST->execute([$this->dni, $this->apellido, $this->nombre, $this->email, $this->telefono]);
             $this->id = $this->conexion->lastInsertId();
         }
-
+    
         return $this->id;
     }
+    
 
     public function delete($id) {
         $sql = "DELETE FROM $this->table WHERE idPersona = ?";

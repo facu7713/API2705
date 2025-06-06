@@ -47,8 +47,9 @@ class Alumno {
     }
 
     public function save($param) {
+        require_once 'Sanitiza.class.php';
         $exists = false;
-
+    
         if (isset($param['idAlumno']) && $param['idAlumno'] !== "") {
             $actual = $this->getAlumnoById($param['idAlumno']);
             if ($actual && isset($actual['idAlumno'])) {
@@ -56,12 +57,24 @@ class Alumno {
                 $this->id = $actual['idAlumno'];
             }
         }
-
-        // Asignar datos
-        if (isset($param['anio'])) $this->anio = $param['anio'];
-        if (isset($param['materias_aprobadas'])) $this->materias_aprobadas = $param['materias_aprobadas'];
-        if (isset($param['Persona_idPersona'])) $this->Persona_idPersona = $param['Persona_idPersona'];
-
+    
+        // Asignar y validar datos
+        if (isset($param['anio'])) {
+            $this->anio = $param['anio']; 
+        }
+    
+        if (isset($param['materias_aprobadas'])) {
+            $sanitizedMaterias = Sanitiza::MATERIAS_APROBADAS($param['materias_aprobadas']);
+            if ($sanitizedMaterias === false) {
+                throw new Exception("Materias aprobadas inválidas. Debe ser una lista separada por comas con solo letras.");
+            }
+            $this->materias_aprobadas = $sanitizedMaterias;
+        }
+    
+        if (isset($param['Persona_idPersona'])) {
+            $this->Persona_idPersona = $param['Persona_idPersona']; 
+        }
+    
         if ($exists) {
             $sql = "UPDATE $this->table 
                     SET anio = ?, materias_aprobadas = ?, Persona_idPersona = ? 
@@ -84,9 +97,10 @@ class Alumno {
             ]);
             $this->id = $this->conexion->lastInsertId();
         }
-
+    
         return $this->id;
     }
+    
 
     public function delete($id) {
         $sql = "DELETE FROM $this->table WHERE idAlumno = ?";
